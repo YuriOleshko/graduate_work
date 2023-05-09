@@ -5,7 +5,8 @@ from wtforms import (
     BooleanField,
     SubmitField,
     EmailField,
-    validators
+    validators,
+    TextAreaField
 )
 
 class LoginForm(FlaskForm):
@@ -20,3 +21,10 @@ class RegisterForm(FlaskForm):
     email = EmailField('Email', validators=[validators.DataRequired()])
     password = PasswordField('Password', validators=[validators.DataRequired()])
     submit = SubmitField('Sign Up')
+
+
+class FeedbackForm(FlaskForm):
+    username = StringField('Username', validators=[validators.DataRequired()])
+    email = StringField('Email', validators=[validators.DataRequired()])
+    message = TextAreaField('Message', validators=[validators.DataRequired()])
+    submit = SubmitField('Submit')

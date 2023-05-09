@@ -2,7 +2,7 @@ from . import app
 from flask import render_template, redirect, url_for
 from config import Config
 from flask import render_template, redirect, url_for
-from .form import LoginForm, RegisterForm
+from .form import LoginForm, RegisterForm, FeedbackForm
 
 CLIENT_ID = Config.CLIENT_ID
 CLIENT_SECRET = Config.CLIENT_SECRET
@@ -31,7 +31,11 @@ def users():
 
 @app.route('/feedback')
 def feedback():
-    return render_template('feedback.html')
+    form = FeedbackForm()
+    if form.validate_on_submit():
+        # обрабатываем отправку формы
+        return 'Thank you for your review!'
+    return render_template('feedback.html', form=form)
 
 
 @app.route('/login', methods=['GET', 'POST'])

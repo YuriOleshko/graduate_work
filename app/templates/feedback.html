@@ -1,3 +1,32 @@
 {% extends "base.html" %}
 
 {% block title %}Feedback{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12 text-center">
+            <h1>Leave a review</h1>
+                <form method="POST" action="">
+                    {{ form.hidden_tag() }}
+                    <p>
+                    {{ form.username.label }}<br>
+                    {{ form.username() }}
+                    </p>
+                    <p>
+                    {{ form.email.label }}<br>
+                    {{ form.email() }}
+                    </p>
+                    <p>
+                    {{ form.message.label }}<br>
+                    {{ form.message() }}
+                    </p>
+                    <p>
+                    {{ form.submit() }}
+                    </p>
+                </form>
+            <p>If you liked this project, then you can help the development of the project by means 4441 1144 0080 0817</p>
+        </div>
+    </div>
+</div>
+{% endblock%}

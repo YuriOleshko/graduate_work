@@ -3,13 +3,29 @@
 {% block title %}Register{% endblock %}
 
 {% block content %}
-<div>
-    <form method="POST" action="">
-        {{ form.hidden_tag() }}
-        {{ form.username.label }} {{ form.username(size=20) }}<br>
-        {{ form.email.label }} {{form.email(size=20) }}<br>
-        {{ form.password.label }} {{ form.password(size=20) }}<br>
-        {{ form.submit.label }} {{ form.submit() }}
-    </form>
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12 text-center">
+            <h1>Sign up menu</h1>
+                <form method="POST" action="">
+                    {{ form.hidden_tag() }}
+                    <p>
+                    {{ form.username.label }}<br>
+                    {{ form.username() }}
+                    </p>
+                    <p>
+                    {{ form.password.label }}<br>
+                    {{ form.password() }}
+                    </p>
+                    <p>
+                    {{ form.password.label }}<br>
+                    {{ form.password() }}
+                    </p>
+                    <p>
+                    {{ form.submit() }}
+                    </p>
+                </form>
+        </div>
+    </div>
 </div>
 {% endblock%}
