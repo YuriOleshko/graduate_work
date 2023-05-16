@@ -1,7 +1,6 @@
-from . import app
-from flask import render_template, redirect, url_for
+from . import app, User, db
 from config import Config
-from flask import render_template, redirect, url_for
+from flask import render_template, redirect, url_for, request
 from .form import LoginForm, RegisterForm, FeedbackForm
 
 CLIENT_ID = Config.CLIENT_ID
@@ -49,7 +48,19 @@ def login():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegisterForm()
-    if form.validate_on_submit():
-        return redirect(url_for('home'))
-    return render_template('register.html', form=form)
+    if form.validate_on_submit() and request.method == 'POST':
+        username = request.form['username']
+        email = request.form['email']
+        #password = request.form['password']
+
+        user = User(username=username, email=email)
+
+        try:
+            db.session.add(user)
+            db.session.commit()
+            return redirect(url_for('home'))
+        except:
+            return 'An error occurred during registration'
+    else:
+        return render_template('register.html', form=form)
 
