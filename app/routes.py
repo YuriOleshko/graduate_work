@@ -24,14 +24,13 @@ def main():
     return render_template('main.html', url1=url1, url2=url2)
 
 
-@app.route('/home')
-def home():
-
-    result = ''
-    if result:
-        return 'hole'
+@app.route('/home/<int:user_id>')
+def home(id):
+    user = User.query.get(id)
+    if user:
+        return render_template('home.html', user=user)
     else:
-        return render_template('home.html')
+        return redirect('/register')
 
 
 @app.route('/users')
@@ -63,9 +62,10 @@ def login():
         user = User.query.filter_by(username=username).first()
         if user and user.password == password:
             login_user(user, remember=remember)
-            return redirect('/home')
+            return redirect('/home/<int:user_id>')
         else:
-            return render_template('login.html', form=form)
+            text = 'Username or password is not correct'
+            return render_template('login.html', form=form, text=text)
 
     return render_template('login.html', form=form)
 
@@ -77,6 +77,17 @@ def register():
         username = request.form['username']
         email = request.form['email']
         password = request.form['password']
+
+        user = User.query.filter_by(username=username).first()
+        if user:
+            text = 'Username already exists'
+            return render_template('register.html', form=form, text=text)
+
+        user = User.query.filter_by(email=email).first()
+        if user:
+            text1 = 'Email already exists'
+            return render_template('register.html', form=form, text1=text1)
+
 
         user = User(username=username, email=email, password=password)
 
