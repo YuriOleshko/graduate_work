@@ -4,12 +4,13 @@ from config import Config
 from flask import render_template, redirect, url_for, request
 from .form import LoginForm, RegisterForm, FeedbackForm
 from flask_login import LoginManager, login_user, UserMixin, current_user
+from urllib.parse import urlparse, parse_qs
 
 
 CLIENT_ID = Config.CLIENT_ID
 CLIENT_SECRET = Config.CLIENT_SECRET
 AUTHORIZATION_BASE_URL = 'https://www.fitbit.com/oauth2/authorize'
-REDIRECT_URI = 'http://127.0.0.1:5000/home'
+REDIRECT_URI = 'http://127.0.0.1:5000/callback'
 SCOPE = ['activity']
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
@@ -18,15 +19,48 @@ login_manager.login_view = 'login'
 
 @app.route('/')
 def main():
-    #url = f'{AUTHORIZATION_BASE_URL}?response_type=token&client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}&scope={" ".join(SCOPE)}'
     url1 = '/login'
     url2 = '/register'
     return render_template('main.html', url1=url1, url2=url2)
 
 
-@app.route('/home/<int:user_id>')
-def home(user_id):
-    return render_template('home.html', user_id=user_id)
+@app.route('/home')
+def home():
+    url = f'{AUTHORIZATION_BASE_URL}?response_type=token&client_id={CLIENT_ID}' \
+          f'&redirect_uri={REDIRECT_URI}&scope={" ".join(SCOPE)}'
+    if current_user.is_authenticated:
+        if current_user.token:
+            return redirect(url_for('user_home', user_id=current_user.id))
+        else:
+            # Действия, если у пользователя отсутствует токен
+            return render_template('no_token.html', url=url)
+    else:
+        return redirect(url_for('login'))
+
+
+@app.route('/callback')
+def callback():
+    fragment = urlparse(request.url).fragment
+    params = parse_qs(fragment)
+
+    access_token = params.get('access_token', [''])[0]
+
+    if current_user.is_authenticated:
+        current_user.token = access_token
+        db.session.commit()
+        return redirect(url_for('user_home', user_id=current_user.id))
+    else:
+        return redirect(url_for('login'))
+
+
+@app.route('/home/user/<int:user_id>')
+def user_home(user_id):
+    user = User.query.get(user_id)
+    if user:
+        return render_template('user_home.html', user=user)
+    else:
+        return redirect(url_for('register'))
+
 
 
 @app.route('/users')
@@ -58,7 +92,7 @@ def login():
         user = User.query.filter_by(username=username).first()
         if user and user.password == password:
             login_user(user, remember=remember)
-            return redirect(url_for('home', user_id=user.id))
+            return redirect(url_for('home'))
         else:
             text = 'Username or password is not correct'
             return render_template('login.html', form=form, text=text)
@@ -90,7 +124,7 @@ def register():
         try:
             db.session.add(user)
             db.session.commit()
-            return redirect(url_for('home', user_id=user.id))
+            return redirect(url_for('home'))
         except:
             return 'An error occurred during registration'
     else:
