@@ -25,12 +25,8 @@ def main():
 
 
 @app.route('/home/<int:user_id>')
-def home(id):
-    user = User.query.get(id)
-    if user:
-        return render_template('home.html', user=user)
-    else:
-        return redirect('/register')
+def home(user_id):
+    return render_template('home.html', user_id=user_id)
 
 
 @app.route('/users')
@@ -62,7 +58,7 @@ def login():
         user = User.query.filter_by(username=username).first()
         if user and user.password == password:
             login_user(user, remember=remember)
-            return redirect('/home/<int:user_id>')
+            return redirect(url_for('home', user_id=user.id))
         else:
             text = 'Username or password is not correct'
             return render_template('login.html', form=form, text=text)
@@ -94,7 +90,7 @@ def register():
         try:
             db.session.add(user)
             db.session.commit()
-            return redirect(url_for('home'))
+            return redirect(url_for('home', user_id=user.id))
         except:
             return 'An error occurred during registration'
     else:
