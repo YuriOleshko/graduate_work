@@ -1,20 +1,23 @@
 from . import app
 from .models import User, db
 from config import Config
-from flask import render_template, redirect, url_for, request
+from flask import render_template, redirect, url_for, request, session
 from .form import LoginForm, RegisterForm, FeedbackForm
-from flask_login import LoginManager, login_user, UserMixin, current_user
-from urllib.parse import urlparse, parse_qs
+from flask_login import LoginManager, login_user, current_user
+from requests_oauthlib import OAuth2Session
+from oauthlib.oauth2 import BackendApplicationClient
+
+
 
 
 CLIENT_ID = Config.CLIENT_ID
 CLIENT_SECRET = Config.CLIENT_SECRET
 AUTHORIZATION_BASE_URL = 'https://www.fitbit.com/oauth2/authorize'
-REDIRECT_URI = 'http://127.0.0.1:5000/callback'
-SCOPE = ['activity']
+REDIRECT_URI = 'http://127.0.0.1:5000/home'
+TOKEN_URL = 'https://api.fitbit.com/oauth2/token'
+SCOPE = ['profile']
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
-
 
 
 @app.route('/')
@@ -26,31 +29,26 @@ def main():
 
 @app.route('/home')
 def home():
-    url = f'{AUTHORIZATION_BASE_URL}?response_type=token&client_id={CLIENT_ID}' \
-          f'&redirect_uri={REDIRECT_URI}&scope={" ".join(SCOPE)}'
     if current_user.is_authenticated:
-        if current_user.token:
-            return redirect(url_for('user_home', user_id=current_user.id))
-        else:
-            # Действия, если у пользователя отсутствует токен
-            return render_template('no_token.html', url=url)
+        client = BackendApplicationClient(client_id=CLIENT_ID)
+        oauth = OAuth2Session(client=client)
+        token = oauth.fetch_token(token_url=TOKEN_URL, client_id=CLIENT_ID,
+                                      client_secret=CLIENT_SECRET, scope=SCOPE)
+        session['fitbit_token'] = token['access_token']  # Сохраняем токен в сессии
+
+        # Получаем токен из сессии при каждом запросе
+        access_token = session['fitbit_token']
+
+        # Создаем объект OAuth2Session с переданным токеном
+        oauth = OAuth2Session(client_id=CLIENT_ID, token={'access_token': access_token}, scope=SCOPE)
+
+        # Делаем запрос к API Fitbit, передавая токен в заголовке
+        response = oauth.get("https://api.fitbit.com/1/user/-/profile.json")
+        return response.json()
+        #return redirect(url_for('user_home', user_id=current_user.id))
     else:
         return redirect(url_for('login'))
 
-
-@app.route('/callback')
-def callback():
-    fragment = urlparse(request.url).fragment
-    params = parse_qs(fragment)
-
-    access_token = params.get('access_token', [''])[0]
-
-    if current_user.is_authenticated:
-        current_user.token = access_token
-        db.session.commit()
-        return redirect(url_for('user_home', user_id=current_user.id))
-    else:
-        return redirect(url_for('login'))
 
 
 @app.route('/home/user/<int:user_id>')
@@ -76,9 +74,12 @@ def feedback():
         return 'Thank you for your review!'
     return render_template('feedback.html', form=form)
 
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

@@ -28,3 +28,4 @@ class FeedbackForm(FlaskForm):
     email = StringField('Email', validators=[validators.DataRequired()])
     message = TextAreaField('Message', validators=[validators.DataRequired()])
     submit = SubmitField('Submit')
+
