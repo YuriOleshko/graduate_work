@@ -5,7 +5,7 @@ from flask import render_template, redirect, url_for, request, session
 from .form import LoginForm, RegisterForm, FeedbackForm
 from flask_login import LoginManager, login_user, current_user
 from requests_oauthlib import OAuth2Session
-from oauthlib.oauth2 import BackendApplicationClient
+
 
 
 
@@ -13,9 +13,9 @@ from oauthlib.oauth2 import BackendApplicationClient
 CLIENT_ID = Config.CLIENT_ID
 CLIENT_SECRET = Config.CLIENT_SECRET
 AUTHORIZATION_BASE_URL = 'https://www.fitbit.com/oauth2/authorize'
-REDIRECT_URI = 'http://127.0.0.1:5000/home'
+REDIRECT_URI = 'http://127.0.0.1:5000/callback'
 TOKEN_URL = 'https://api.fitbit.com/oauth2/token'
-SCOPE = ['profile']
+SCOPE = ["activity", "profile"]
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
@@ -30,25 +30,39 @@ def main():
 @app.route('/home')
 def home():
     if current_user.is_authenticated:
-        client = BackendApplicationClient(client_id=CLIENT_ID)
-        oauth = OAuth2Session(client=client)
-        token = oauth.fetch_token(token_url=TOKEN_URL, client_id=CLIENT_ID,
-                                      client_secret=CLIENT_SECRET, scope=SCOPE)
-        session['fitbit_token'] = token['access_token']  # Сохраняем токен в сессии
-
-        # Получаем токен из сессии при каждом запросе
-        access_token = session['fitbit_token']
-
-        # Создаем объект OAuth2Session с переданным токеном
-        oauth = OAuth2Session(client_id=CLIENT_ID, token={'access_token': access_token}, scope=SCOPE)
-
-        # Делаем запрос к API Fitbit, передавая токен в заголовке
-        response = oauth.get("https://api.fitbit.com/1/user/-/profile.json")
-        return response.json()
-        #return redirect(url_for('user_home', user_id=current_user.id))
+        fitbit = OAuth2Session(
+            CLIENT_ID,
+            redirect_uri=REDIRECT_URI,
+            scope=["activity", "profile"],
+        )
+        authorization_url, state = fitbit.authorization_url(AUTHORIZATION_BASE_URL)
+        session["oauth_state"] = state
+        return redirect(authorization_url)
     else:
         return redirect(url_for('login'))
 
+@app.route("/callback", methods=['GET'])
+def callback():
+    fitbit = OAuth2Session(
+        CLIENT_ID,
+        redirect_uri=REDIRECT_URI,
+        scope=["activity", "profile"],
+        state=session["oauth_state"]
+    )
+    token = fitbit.fetch_token(
+        TOKEN_URL,
+        client_secret=CLIENT_SECRET,
+        authorization_response=request.url
+    )
+    current_user.token = token['access_token']
+    current_user.id_fitbit = token['user_id']
+    db.session.add(current_user)
+    db.session.commit()
+    session["token"] = token
+
+    fitbit = OAuth2Session(CLIENT_ID, token=token)
+    response = fitbit.get(f"https://api.fitbit.com/1/user/{current_user.id_fitbit}/activities/date/today.json")
+    return response.json()
 
 
 @app.route('/home/user/<int:user_id>')

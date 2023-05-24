@@ -13,6 +13,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(20), nullable=False)
     token = db.Column(db.String(350))
+    id_fitbit = db.Column(db.String(20))
 
 
 with app.app_context():
