@@ -1,10 +1,11 @@
 from . import app
-from .models import User, db
+from .models import User, db, Achievement
 from config import Config
 from flask import render_template, redirect, url_for, request, session
 from .form import LoginForm, RegisterForm, FeedbackForm
 from flask_login import LoginManager, login_user, current_user
 from requests_oauthlib import OAuth2Session
+import datetime
 
 
 
@@ -61,8 +62,27 @@ def callback():
     session["token"] = token
 
     fitbit = OAuth2Session(CLIENT_ID, token=token)
-    response = fitbit.get(f"https://api.fitbit.com/1/user/{current_user.id_fitbit}/activities/date/today.json")
-    return response.json()
+    today = datetime.date.today().strftime("%Y-%m-%d")
+    response = fitbit.get(f"https://api.fitbit.com/1/user/{current_user.id_fitbit}/activities/date/{today}.json")
+    response_data = response.json()
+
+    steps = response_data['summary']['steps']
+    active_minutes = response_data['summary']['veryActiveMinutes']
+    distance = response_data['summary']['distances'][0]['distance']  # Assuming you want the total distance
+    restful_minutes = response_data['summary']['sedentaryMinutes']
+
+    achievement = Achievement(
+        user_id=current_user.id,
+        steps=steps,
+        distance=distance,
+        active_minutes=active_minutes,
+        restful_minutes=restful_minutes
+    )
+
+    # Добавление и сохранение данных в базе данных
+    db.session.add(achievement)
+    db.session.commit()
+    return redirect(url_for('user_home', user_id=current_user.id))
 
 
 @app.route('/home/user/<int:user_id>')
