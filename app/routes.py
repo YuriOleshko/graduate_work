@@ -68,7 +68,7 @@ def callback():
 
     steps = response_data['summary']['steps']
     active_minutes = response_data['summary']['veryActiveMinutes']
-    distance = response_data['summary']['distances'][0]['distance']  # Assuming you want the total distance
+    distance = response_data['summary']['distances'][0]['distance']
     restful_minutes = response_data['summary']['sedentaryMinutes']
 
     achievement = Achievement(
@@ -79,7 +79,6 @@ def callback():
         restful_minutes=restful_minutes
     )
 
-    # Добавление и сохранение данных в базе данных
     db.session.add(achievement)
     db.session.commit()
     return redirect(url_for('user_home', user_id=current_user.id))
