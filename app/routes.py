@@ -70,16 +70,30 @@ def callback():
     active_minutes = response_data['summary']['veryActiveMinutes']
     distance = response_data['summary']['distances'][0]['distance']
     restful_minutes = response_data['summary']['sedentaryMinutes']
+    calories = response_data['summary']['caloriesOut']
+    date = today
 
-    achievement = Achievement(
-        user_id=current_user.id,
-        steps=steps,
-        distance=distance,
-        active_minutes=active_minutes,
-        restful_minutes=restful_minutes
-    )
+    achievement = Achievement.query.filter_by(user_id=current_user.id).first()
+    if achievement:
+        achievement.steps = steps
+        achievement.distance = distance
+        achievement.active_minutes = active_minutes
+        achievement.restful_minutes = restful_minutes
+        achievement.calories = calories
+        achievement.date = date
 
-    db.session.add(achievement)
+    else:
+        achievement = Achievement(
+            user_id=current_user.id,
+            steps=steps,
+            distance=distance,
+            active_minutes=active_minutes,
+            restful_minutes=restful_minutes,
+            calories=calories,
+            date=date
+        )
+        db.session.add(achievement)
+
     db.session.commit()
     return redirect(url_for('user_home', user_id=current_user.id))
 
@@ -88,14 +102,23 @@ def callback():
 def user_home(user_id):
     user = User.query.get(user_id)
     if user:
-        return render_template('user_home.html', user=user)
+        achievements = Achievement.query.filter_by(user_id=user.id).all()
+        return render_template('user_home.html', user=user, achievements=achievements)
     else:
         return redirect(url_for('register'))
 
 
 
-@app.route('/users')
+@app.route('/users', methods=['GET', 'POST'])
 def users():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        user = User.query.filter_by(username=username).first()
+        if user:
+            return redirect(url_for('user_home', user_id=user.id))
+        else:
+            text = 'User not found'
+            return render_template('users.html', text=text)
     return render_template('users.html')
 
 

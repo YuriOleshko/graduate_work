@@ -1,3 +1,53 @@
 {% extends "base.html" %}
 
-{% block title %}User home{% endblock %}
+{% block title %}User Home{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-12 text-center">
+      <h1>Welcome, {{ user.username }}!</h1>
+
+      <h2>Your Achievements:</h2>
+
+      {% for achievement in achievements %}
+
+      <p>Here are your achievements for {{achievement.date}}:</p>
+
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Metric</th>
+            <th scope="col">Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Steps</td>
+            <td>{{ achievement.steps }}</td>
+          </tr>
+          <tr>
+            <td>Distance</td>
+            <td>{{ achievement.distance }}</td>
+          </tr>
+          <tr>
+            <td>Active Minutes</td>
+            <td>{{ achievement.active_minutes }}</td>
+          </tr>
+          <tr>
+            <td>Restful Minutes</td>
+            <td>{{ achievement.restful_minutes }}</td>
+          </tr>
+          <tr>
+            <td>Calories Burned</td>
+            <td>{{ achievement.calories }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      {% endfor %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}

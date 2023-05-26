@@ -24,6 +24,8 @@ class Achievement(db.Model):
     distance = db.Column(db.Float, nullable=False)
     active_minutes = db.Column(db.Integer, nullable=False)
     restful_minutes = db.Column(db.Integer, nullable=False)
+    calories = db.Column(db.Integer, nullable=False)
+    date = db.Column(db.String(15))
 
 with app.app_context():
     db.create_all()

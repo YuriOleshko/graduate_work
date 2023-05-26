@@ -1,3 +1,20 @@
 {% extends "base.html" %}
 
 {% block title %}Users{% endblock %}
+
+{% block content %}
+    <div class="container mt-4">
+        <h1>Users</h1>
+        <form method="post" class="mb-3">
+            <div class="input-group">
+                <input type="text" class="form-control" name="username" placeholder="Search by username">
+                <div class="input-group-append">
+                    <button class="btn btn-primary" type="submit">Search</button>
+                </div>
+            </div>
+        </form>
+        {% if text %}
+            <p>{{ text }}</p>
+        {% endif %}
+    </div>
+{% endblock %}
